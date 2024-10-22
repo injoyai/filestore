@@ -6,23 +6,35 @@ import (
 	"github.com/injoyai/conv/cfg/v2"
 	"github.com/injoyai/goutil/frame/in/v3"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 )
 
+func init() {
+	cfg.Init(cfg.WithYaml("./config/config1.yaml"))
+}
+
 func main() {
 
-	dir := cfg.GetString("dir", "./resource/")
 	port := cfg.GetInt("port", 8080)
-	enableUpload := cfg.GetBool("enableUpload", false)
+	dir := cfg.GetString("dir", "./resource/")
+	enableDownload := cfg.GetBool("enableDownload", true)
+	enableUpload := cfg.GetBool("enableUpload")
+	enableDelete := cfg.GetBool("enableDelete")
 
+	log.Println("Server listen on:", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), in.Recover(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		filename := filepath.Join(dir, r.URL.Path)
 		fullDir, name := filepath.Split(filename)
 
 		switch r.Method {
 		case http.MethodGet:
+			if !enableDownload {
+				in.Return(http.StatusForbidden, nil)
+			}
+
 			f, err := os.Open(filename)
 			if err != nil {
 				in.Return(http.StatusForbidden, nil)
@@ -34,8 +46,10 @@ func main() {
 				in.Return(http.StatusForbidden, nil)
 			}
 
-			w.Header().Set("Content-Disposition", "attachment; filename="+name)
-			w.Header().Set("Content-Length", conv.String(info.Size()))
+			if ls := r.URL.Query()["show"]; len(ls) == 0 {
+				w.Header().Set("Content-Disposition", "attachment; filename="+name)
+				w.Header().Set("Content-Length", conv.String(info.Size()))
+			}
 			io.Copy(w, f)
 
 		case http.MethodPost:
@@ -58,6 +72,16 @@ func main() {
 			in.CheckErr(err)
 
 			err = os.Rename(filename+".uploading", filename)
+			in.CheckErr(err)
+
+			in.Succ(nil)
+
+		case http.MethodDelete:
+			if !enableDelete {
+				in.Return(http.StatusForbidden, nil)
+			}
+
+			err := os.Remove(filename)
 			in.CheckErr(err)
 
 			in.Succ(nil)

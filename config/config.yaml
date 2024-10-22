@@ -1,0 +1,5 @@
+port: 8080
+dir: './resource/'
+enableDownload: true
+enableUpload: false
+enableDelete: false
