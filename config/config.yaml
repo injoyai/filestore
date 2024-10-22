@@ -1,5 +1,16 @@
+#服务的端口
 port: 8080
+#存储的目录
 dir: './resource/'
-enableDownload: true
-enableUpload: false
-enableDelete: false
+#启用下载
+downloadEnable: true
+#下载的Token,启用下载时有效
+downloadToken: ''
+#启用上传
+uploadEnable: false
+#上传的Token,启用上传时有效
+uploadToken: ''
+#启用删除
+deleteEnable: false
+#删除的Token,启用删除时有效
+deleteToken: ''

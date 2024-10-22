@@ -18,9 +18,12 @@ func init() {
 		cfg.WithFlag(
 			&cfg.Flag{Name: "port", Default: "8080", Usage: "服务的端口"},
 			&cfg.Flag{Name: "dir", Default: "./resource/", Usage: "存储的目录"},
-			&cfg.Flag{Name: "enableDownload", Default: "true", Usage: "启用下载"},
-			&cfg.Flag{Name: "enableUpload", Default: "false", Usage: "启用上传"},
-			&cfg.Flag{Name: "enableDelete", Default: "false", Usage: "启用删除"},
+			&cfg.Flag{Name: "downloadEnable", Default: "true", Usage: "启用下载"},
+			&cfg.Flag{Name: "downloadToken", Usage: "下载的Token,启用下载时有效"},
+			&cfg.Flag{Name: "uploadEnable", Default: "false", Usage: "启用上传"},
+			&cfg.Flag{Name: "uploadToken", Usage: "上传的Token,启用上传时有效"},
+			&cfg.Flag{Name: "deleteEnable", Default: "false", Usage: "启用删除"},
+			&cfg.Flag{Name: "deleteToken", Usage: "删除的Token,启用删除时有效"},
 		),
 	)
 }
@@ -29,18 +32,25 @@ func main() {
 
 	port := cfg.GetInt("port", 8080)
 	dir := cfg.GetString("dir", "./resource/")
-	enableDownload := cfg.GetBool("enableDownload", true)
-	enableUpload := cfg.GetBool("enableUpload")
-	enableDelete := cfg.GetBool("enableDelete")
+	downloadEnable := cfg.GetBool("downloadEnable", true)
+	downloadToken := cfg.GetString("downloadToken")
+	uploadEnable := cfg.GetBool("uploadEnable")
+	uploadToken := cfg.GetString("uploadToken")
+	deleteEnable := cfg.GetBool("deleteEnable")
+	deleteToken := cfg.GetString("deleteToken")
 
 	log.Println("Server listen on:", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), in.Recover(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		filename := filepath.Join(dir, r.URL.Path)
 		fullDir, name := filepath.Split(filename)
+		token := r.Header.Get("Authentication")
 
 		switch r.Method {
 		case http.MethodGet:
-			if !enableDownload {
+			if !downloadEnable {
+				in.Return(http.StatusForbidden, nil)
+			}
+			if len(downloadToken) > 0 && downloadToken != token {
 				in.Return(http.StatusForbidden, nil)
 			}
 
@@ -62,7 +72,10 @@ func main() {
 			io.Copy(w, f)
 
 		case http.MethodPost:
-			if !enableUpload {
+			if !uploadEnable {
+				in.Return(http.StatusForbidden, nil)
+			}
+			if len(uploadToken) > 0 && uploadToken != token {
 				in.Return(http.StatusForbidden, nil)
 			}
 
@@ -86,7 +99,10 @@ func main() {
 			in.Succ(nil)
 
 		case http.MethodDelete:
-			if !enableDelete {
+			if !deleteEnable {
+				in.Return(http.StatusForbidden, nil)
+			}
+			if len(deleteToken) > 0 && deleteToken != token {
 				in.Return(http.StatusForbidden, nil)
 			}
 
