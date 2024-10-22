@@ -13,7 +13,16 @@ import (
 )
 
 func init() {
-	cfg.Init(cfg.WithYaml("./config/config1.yaml"))
+	cfg.Init(
+		cfg.WithYaml("./config/config.yaml"),
+		cfg.WithFlag(
+			&cfg.Flag{Name: "port", Default: "8080", Usage: "服务的端口"},
+			&cfg.Flag{Name: "dir", Default: "./resource/", Usage: "存储的目录"},
+			&cfg.Flag{Name: "enableDownload", Default: "true", Usage: "启用下载"},
+			&cfg.Flag{Name: "enableUpload", Default: "false", Usage: "启用上传"},
+			&cfg.Flag{Name: "enableDelete", Default: "false", Usage: "启用删除"},
+		),
+	)
 }
 
 func main() {
