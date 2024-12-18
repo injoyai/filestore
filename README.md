@@ -24,7 +24,7 @@
     ```
 2. 通过命令行
     ```
-   filestore --port=8080 --dir==./upload --uploadEnable=true
+   filestore --port=8080 --dir=./upload --uploadEnable=true
    ```
     
 3. 启用下载后可以使用query的show进行预览
